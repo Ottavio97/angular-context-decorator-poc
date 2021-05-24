@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { ContextDescriptor, ContextVar } from './app.decorators';
+import { StateActivator, StateDescriptor, StateValue } from './app.decorators';
 
 @Component({
   selector: 'app-root',
@@ -10,10 +10,6 @@ export class AppComponent {
   title = 'auto-context-project';
 
   activate(instance: any) {
-    if ('saveContext' in instance) instance.saveContext();
-      /*const cxtDescriptor: ContextDescriptor[] = instance?.constructor?.prototype?.__context__;
-      if (cxtDescriptor) {
-        console.log('Context of ', instance, ':', cxtDescriptor.map(d => ({key: d.key, value: instance[d.variable]})))
-      }*/
+    StateActivator(instance);
   }
 }

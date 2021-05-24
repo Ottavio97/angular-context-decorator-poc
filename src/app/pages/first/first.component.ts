@@ -1,28 +1,35 @@
 import { Component, OnInit } from '@angular/core';
-import { ContextAware, ContextVar, StateAware, StateVar } from 'src/app/app.decorators';
+import { ComponentStateAware, StateAware, StateValue, StateVar } from 'src/app/app.decorators';
 
 @Component({
   selector: 'app-first',
   templateUrl: './first.component.html',
   styleUrls: ['./first.component.scss']
 })
-export class FirstComponent implements OnInit, ContextAware, StateAware {
-  saveContext;
-  saveState;
-
-  @ContextVar()
-  @StateVar('stateExVar')
+export class FirstComponent extends ComponentStateAware implements OnInit, StateAware {
   exVar = 'ok';
 
-  @ContextVar('customName')
-  @StateVar()
   cuVar = 'no';
 
-  @ContextVar('myInput')
+  @StateVar('inputCustom', true)
   inVar: string;
 
-  constructor() { }
+  constructor() {
+    super();
+  }
 
   ngOnInit(): void {
+  }
+
+  ngOnStateSaved(map: StateValue[]) {
+    console.log('EVENT: State Saved', map);
+  }
+
+  ngOnStateLoaded() {
+    console.log('EVENT: State Loaded');
+  }
+
+  ngOnStateCleared() {
+    console.log('EVENT: State Cleared');
   }
 }
