@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ComponentStateAware, StateAware, StateValue, StateVar } from 'src/app/app.decorators';
+import { ComponentStateAware, StateAware, StateDiscriminant, StateValue, StateVar } from 'src/app/app.decorators';
 
 @Component({
   selector: 'app-first',
@@ -7,6 +7,10 @@ import { ComponentStateAware, StateAware, StateValue, StateVar } from 'src/app/a
   styleUrls: ['./first.component.scss']
 })
 export class FirstComponent extends ComponentStateAware implements OnInit, StateAware {
+
+  @StateDiscriminant()
+  componentId = 'ciaotest';
+
   exVar = 'ok';
 
   cuVar = 'no';

@@ -15,6 +15,13 @@ export interface StateAware {
     ngOnStateSaved?: (mapState?: StateValue[]) => void;
     ngOnStateLoaded?: () => void;
     ngOnStateCleared?: () => void;
+    stateStorage?: StateStorage;
+}
+
+export interface StateStorage {
+    save: <T>(key: string, value: T) => T;
+    load: <T>(key: string, defaultValue?: T) => T | undefined;
+    remove: <T>(key: string) => T;
 }
 
 export class ComponentStateAware implements StateAware {
@@ -30,7 +37,7 @@ function __defaultSaveState(this: StateAware, stx?: StateDescriptor[]) {
         .filter(d => d.onlyNonNull && this[d.variable] || !d.onlyNonNull)
         .map(d => ({key: d.key, value: this[d.variable]}));
     if (mapState?.length > 0) {
-        localStorage.setItem('state_' + this.constructor.name, JSON.stringify(mapState));
+        (this.stateStorage || __defaultStateStorage).save('state_' + this.constructor.name + (this.constructor.prototype?.__discriminant__ ? '_' + this[this.constructor.prototype?.__discriminant__] : ''), mapState);
         if(this.ngOnStateSaved) {
             this.ngOnStateSaved(mapState);
         }
@@ -40,7 +47,7 @@ function __defaultSaveState(this: StateAware, stx?: StateDescriptor[]) {
 function __defaultLoadState(this: StateAware) {
     let stateValues: StateValue[];
     try {
-        stateValues = JSON.parse(localStorage.getItem('state_' + this.constructor.name));
+        stateValues = (this.stateStorage || __defaultStateStorage).load('state_' + this.constructor.name + (this.constructor.prototype?.__discriminant__ ? '_' + this[this.constructor.prototype?.__discriminant__] : ''));
     } catch (e) {
         stateValues = undefined;
     }
@@ -60,9 +67,41 @@ function __defaultLoadState(this: StateAware) {
 }
 
 function __defaultClearState(this: StateAware) {
-    localStorage.removeItem('state_' + this.constructor.name);
+    (this.stateStorage || __defaultStateStorage).remove('state_' + this.constructor.name + (this.constructor.prototype?.__discriminant__ ? '_' + this[this.constructor.prototype?.__discriminant__] : ''))
     if (this.ngOnStateCleared) {
         this.ngOnStateCleared();
+    }
+}
+
+const __defaultStateStorage: StateStorage = {
+    save: <T>(key: string, value: T) => {
+        localStorage.setItem(key, JSON.stringify(value));
+        return value;
+    },
+    load: <T>(key: string, defaultValue?: T) => {
+        try {
+            const theValue: string = localStorage.getItem(key);
+            if (theValue === null || theValue === undefined)
+                return defaultValue;
+            return JSON.parse(theValue) as T;
+        } catch (e) {
+            console.error('Error parsing State Storage key ', key, ': ', e);
+            return defaultValue;
+        }
+    },
+    remove: <T>(key: string) => {
+        const theValue: string = localStorage.getItem(key);
+        if (theValue === null || theValue === undefined){
+            console.warn('No State Storage key found: ', key, '. Abort removing.');
+        }
+        localStorage.removeItem(key);
+        return JSON.parse(theValue);
+    }
+};
+
+export function StateDiscriminant(): (component: any, propertyKey: string) => void {
+    return (component, variable) => {
+        component.__discriminant__ = variable;
     }
 }
 
